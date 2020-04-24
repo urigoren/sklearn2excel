@@ -28,13 +28,13 @@ def classes_array(model) -> str:
 def translate_log_reg(model: LogisticRegression) -> str:
     sigmoid = "1/(1+EXP(-{intercept:0.3f}-(SUM({{{weights}}}*{range}))))"
     if model.coef_.shape[0] == 1:  # Binary classification
-        xl_range = row_range(0, len(model.classes_), 1)
+        xl_range = row_range(0, len(model.classes_), first_column)
         weights = ",".join([f"{w:0.3f}" for w in model.coef_[0]])
         ret = sigmoid.format(intercept=float(model.intercept_), weights=weights, range=xl_range)
         ret = "ROUND({f},0)".format(f=ret)
         ret = "INDEX({a}, {i}, 1)".format(a=classes_array(model), i=ret)
     else:  # multiclass
-        xl_range = row_range(0, len(model.classes_), 1)
+        xl_range = row_range(0, len(model.classes_), first_column)
         sigmoids = []
         for i in range(model.coef_.shape[0]):
             weights = ",".join([f"{w:0.3f}" for w in model.coef_[i]])
@@ -55,3 +55,6 @@ def translate(model) -> str:
     if isinstance(model, DecisionTreeClassifier):
         return translate_decision_tree(model)
     raise NotImplementedError("{t} is not supported".format(t=type(model).__name__))
+
+
+first_column = 2
