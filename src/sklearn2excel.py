@@ -1,4 +1,3 @@
-import numpy as np
 from string import ascii_uppercase
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
