@@ -16,7 +16,7 @@ def xl_str(s: str) -> str:
 
 
 def dict_lookup(lookup, keys, values) -> str:
-    return 'XLOOKUP("{l}","{k}","{v}")'.format(l=xl_str(lookup), v=xl_str(values), k=xl_str(keys))
+    return 'XLOOKUP({l},{k},{v})'.format(l=xl_str(lookup), v=xl_array(values), k=xl_array(keys))
 
 
 def column_letter(i: int) -> str:
