@@ -47,9 +47,9 @@ def row_range(start_col: int, end_col: int, row_num: int) -> str:
 
 def translate_log_reg(model: LogisticRegression) -> str:
     if model.coef_.shape[0] == 1:  # Binary classification
-        sigmoid = "1/(1+EXP(-{intercept:0." + str(fp_precision) + "f}-(SUM({weights}*{range}))))"
+        sigmoid = "1/(1+EXP(-{intercept}-(SUM({weights}*{range}))))"
         xl_range = row_range(0, model.coef_.shape[1] - 1, first_column)
-        ret = sigmoid.format(intercept=float(model.intercept_), weights=np2array(model.coef_), range=xl_range)
+        ret = sigmoid.format(intercept=xl_num(float(model.intercept_)), weights=np2array(model.coef_), range=xl_range)
         ret = "ROUND({f},0)".format(f=ret)
         ret = "INDEX({a}, {i}, 1)".format(a=xl_array(model.classes_), i=ret)
     else:  # multiclass
