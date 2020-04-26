@@ -12,7 +12,23 @@ def argmin(x_range, y_range):
 
 
 def xl_str(s: str) -> str:
+    if isinstance(s, str) and s.startswith('"') and s.endswith('"') and len(s) > 2 and '"' not in s[1:-1]:
+        return s
     return '"{x}"'.format(x=str(s).replace('"', '""'))
+
+
+def xl_num(f: float) -> str:
+    return ("{f:0." + str(fp_precision) + "f}").format(f=f)
+
+
+def xl_array(lst, numeric=False) -> str:
+    if numeric==True:
+        return "{" + ",".join([xl_num(c) for c in lst]) + "}"
+    return "{" + ",".join([xl_str(c) for c in lst]) + "}"
+
+
+def np2array(X) -> str:
+    return "{" + ";".join([",".join([xl_num(a) for a in row]) for row in X]) + "}"
 
 
 def dict_lookup(lookup, keys, values) -> str:
@@ -29,27 +45,18 @@ def row_range(start_col: int, end_col: int, row_num: int) -> str:
     return "$" + column_letter(start_col) + str(row_num) + ":$" + column_letter(end_col) + str(row_num)
 
 
-def xl_array(lst) -> str:
-    return "{" + ",".join([xl_str(c) for c in lst]) + "}"
-
-
-def np2array(X) -> str:
-    return "{" + ";".join([",".join([f"{a:0.3f}" for a in row]) for row in X]) + "}"
-
-
 def translate_log_reg(model: LogisticRegression) -> str:
-    sigmoid = "1/(1+EXP(-{intercept:0.3f}-(SUM({{{weights}}}*{range}))))"
     if model.coef_.shape[0] == 1:  # Binary classification
-        xl_range = row_range(0, len(model.coef_) - 1, first_column)
-        weights = ",".join([f"{w:0.3f}" for w in model.coef_[0]])
-        ret = sigmoid.format(intercept=float(model.intercept_), weights=weights, range=xl_range)
+        sigmoid = "1/(1+EXP(-{intercept:0." + str(fp_precision) + "f}-(SUM({weights}*{range}))))"
+        xl_range = row_range(0, model.coef_.shape[1] - 1, first_column)
+        ret = sigmoid.format(intercept=float(model.intercept_), weights=np2array(model.coef_), range=xl_range)
         ret = "ROUND({f},0)".format(f=ret)
         ret = "INDEX({a}, {i}, 1)".format(a=xl_array(model.classes_), i=ret)
     else:  # multiclass
         xl_range = row_range(0, model.coef_.shape[1] - 1, first_column)
-        intercept = "{" + ",".join([f"{c:0.3f}" for c in model.intercept_]) + "}"
-        sigmoids = "1/(1-EXP(-{i}-MMULT({x},{w})))".format(w=np2array(model.coef_.T), x=xl_range, i=intercept)
-        ret = argmax(sigmoids, xl_array(model.classes_))
+        intercept = "{" + ",".join([xl_num(c) for c in model.intercept_]) + "}"
+        sigmoid_matrix = "1/(1-EXP(-{i}-MMULT({x},{w})))".format(w=np2array(model.coef_.T), x=xl_range, i=intercept)
+        ret = argmax(sigmoid_matrix, xl_array(model.classes_))
     return "=" + ret.replace("(--", "(")
 
 
@@ -66,3 +73,4 @@ def translate(model) -> str:
 
 
 first_column = 2
+fp_precision = 3
